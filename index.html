@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Il Sindaco del Bilancio</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1e272e;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        #game-container {
+            background: #2f3640;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            width: 500px;
+            text-align: center;
+        }
+        .bars {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .bar-container {
+            background: #485460;
+            border-radius: 8px;
+            height: 20px;
+            width: 100%;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        #pop-fill { background: #4cd137; width: 50%; }
+        #debito-fill { background: #ea2027; width: 20%; }
+        
+        /* Grafica della Città con Emoji */
+        #city-grid {
+            background: #1e272e;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 2.5rem;
+            letter-spacing: 10px;
+            margin: 20px 0;
+            min-height: 50px;
+        }
+        .city-element {
+            display: inline-block;
+            transition: opacity 0.5s, transform 0.5s;
+        }
+        .rotta { opacity: 0.2; transform: scale(0.8); }
+
+        #event-box {
+            background: #718093;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            min-height: 50px;
+            font-weight: bold;
+        }
+        .slider-section {
+            background: #3d3d3d;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        input[type=range] {
+            width: 80%;
+            margin-top: 10px;
+        }
+        button {
+            background: #00a8ff;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+        }
+        button:hover { background: #0097e6; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <h2>🏛️ Il Sindaco del Bilancio</h2>
+    <p>Turno: <span id="turno-txt">1</span>/5</p>
+
+    <div class="bars">
+        <label>😊 Popolarità Cittadini: <span id="pop-val">50</span>%</label>
+        <div class="bar-container"><div id="pop-fill" class="bar-fill"></div></div>
+        
+        <label>⚠️ Debito Pubblico: <span id="debito-val">20</span>k €</label>
+        <div class="bar-container"><div id="debito-fill" class="bar-fill"></div></div>
+    </div>
+
+    <div id="city-grid">
+        <span id="building-scuola" class="city-element">🏫</span>
+        <span id="building-ospedale" class="city-element">🏥</span>
+        <span id="building-strade" class="city-element">🛣️</span>
+        <span id="building-parco" class="city-element">🌳</span>
+    </div>
+
+    <div id="event-box">Istruzioni: Regola le tasse per il prossimo anno e premi "Conferma Turno" per vedere l'impatto!</div>
+
+    <div class="slider-section">
+        <label>💰 Livello Tasse Generali: <span id="tasse-val">10</span>%</label><br>
+        <input type="range" id="tasse-slider" min="0" max="30" value="10" oninput="aggiornaSlider(this.value)">
+    </div>
+
+    <button onclick="prossimoTurno()">Conferma e Avanza Anno ➡️</button>
+</div>
+
+<script>
+    let turno = 1;
+    let popolarita = 50;
+    let debito = 20;
+    let livelloTasse = 10;
+
+    // Database degli eventi fissi per turno
+    const eventi = [
+        "Anno 1: Gli insegnanti chiedono fondi per ristrutturare la scuola.",
+        "Anno 2: C'è bisogno di riparare le buche sulle strade principali.",
+        "Anno 3: I medici segnalano che l'ospedale ha finito i posti letto disponibili.",
+        "Anno 4: I cittadini richiedono la manutenzione del parco pubblico comunale.",
+        "Anno 5: Ultimo anno! Bilancia i conti prima delle elezioni finali."
+    ];
+
+    function aggiornaSlider(valore) {
+        livelloTasse = parseInt(valore);
+        document.getElementById("tasse-val").innerText = livelloTasse;
+    }
+
+    function prossimoTurno() {
+        // Calcolo logica finanziaria basata sulle tasse
+        // Tasse basse (sotto il 12%) -> i cittadini sono felici ma fai debito
+        // Tasse alte (sopra il 18%) -> incassi soldi (riduci debito) ma la popolarità cala
+        if (livelloTasse < 12) {
+            popolarita += 10;
+            debito += 15; // Spesa pubblica non coperta dalle tasse
+        } else if (livelloTasse > 18) {
+            popolarita -= 15;
+            debito -= 10; // Riduci il debito con le entrate
+        } else {
+            // Tasse bilanciate
+            popolarita += 2;
+            debito += 2;
+        }
+
+        // Applica vincoli (0-100)
+        popolarita = Math.max(0, Math.min(100, popolarita));
+        debito = Math.max(0, debito);
+
+        // AGGIORNA LA GRAFICA DELLA CITTÀ in base alle statistiche
+        // Se il debito è troppo alto, i servizi deperiscono (diventano trasparenti)
+        if (debito > 40) {
+            document.getElementById("building-strade").classList.add("rotta");
+            document.getElementById("building-parco").classList.add("rotta");
+        } else {
+            document.getElementById("building-strade").classList.remove("rotta");
+            document.getElementById("building-parco").classList.remove("rotta");
+        }
+
+        if (popolarita < 30) {
+            document.getElementById("building-scuola").classList.add("rotta");
+        } else {
+            document.getElementById("building-scuola").classList.remove("rotta");
+        }
+
+        // Aggiorna interfaccia visiva
+        document.getElementById("pop-val").innerText = popolarita;
+        document.getElementById("pop-fill").style.width = popolarita + "%";
+        
+        document.getElementById("debito-val").innerText = debito;
+        // La barra del debito si riempie proporzionalmente a un tetto massimo di 80k
+        document.getElementById("debito-fill").style.width = Math.min(100, (debito / 80) * 100) + "%";
+
+        // Controlli di Game Over immediati
+        if (popolarita <= 0) {
+            alert("Game Over! I cittadini ti hanno rimosso dall'incarico per via delle rivolte!");
+            resetGioco();
+            return;
+        }
+        if (debito >= 80) {
+            alert("Game Over! Il debito è fuori controllo, lo Spread è esploso e la città è fallita!");
+            resetGioco();
+            return;
+        }
+
+        // Avanzamento turni
+        turno++;
+        if (turno > 5) {
+            alert("Vittoria! Sei arrivato alla fine del mandato. Popolarità finale: " + popolarita + "% - Debito: " + debito + "k €");
+            resetGioco();
+            return;
+        }
+
+        document.getElementById("turno-txt").innerText = turno;
+        document.getElementById("event-box").innerText = eventi[turno - 1];
+    }
+
+    function resetGioco() {
+        turno = 1;
+        popolarita = 50;
+        debito = 20;
+        livelloTasse = 10;
+        document.getElementById("tasse-slider").value = 10;
+        aggiornaSlider(10);
+        document.getElementById("turno-txt").innerText = turno;
+        document.getElementById("event-box").innerText = eventi[0];
+        document.getElementById("pop-val").innerText = popolarita;
+        document.getElementById("pop-fill").style.width = "50%";
+        document.getElementById("debito-val").innerText = debito;
+        document.getElementById("debito-fill").style.width = "25%";
+        document.querySelectorAll(".city-element").forEach(el => el.classList.remove("rotta"));
+    }
+
+    // Avvio iniziale testo dell'evento
+    document.getElementById("event-box").innerText = eventi[0];
+</script>
+
+</body>
+</html>
