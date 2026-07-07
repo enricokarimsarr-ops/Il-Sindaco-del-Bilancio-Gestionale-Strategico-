@@ -5,230 +5,398 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Il Sindaco del Bilancio</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #1e272e;
-            color: #ffffff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
+        :root {
+            --bg-color: #06060c;
+            --panel-color: #0f0f1e;
+            --card-bg: #17172e;
+            --neon-blue: #00f0ff;
+            --neon-pink: #ff007f;
+            --neon-yellow: #ffdf00;
+            --neon-green: #39ff14;
+            --text-color: #ffffff;
+            --font-main: 'Segoe UI', Roboto, sans-serif;
         }
-        #game-container {
-            background: #2f3640;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-            width: 500px;
-            text-align: center;
-        }
-        .bars {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        .bar-container {
-            background: #485460;
-            border-radius: 8px;
-            height: 20px;
-            width: 100%;
-            margin-top: 5px;
-            margin-bottom: 10px;
-            overflow: hidden;
-        }
-        .bar-fill {
-            height: 100%;
-            transition: width 0.3s ease;
-        }
-        #pop-fill { background: #4cd137; width: 50%; }
-        #debito-fill { background: #ea2027; width: 20%; }
-        
-        /* Grafica della Città con Emoji */
-        #city-grid {
-            background: #1e272e;
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 2.5rem;
-            letter-spacing: 10px;
-            margin: 20px 0;
-            min-height: 50px;
-        }
-        .city-element {
-            display: inline-block;
-            transition: opacity 0.5s, transform 0.5s;
-        }
-        .rotta { opacity: 0.2; transform: scale(0.8); }
 
-        #event-box {
-            background: #718093;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
-            min-height: 50px;
-            font-weight: bold;
+        * { box-sizing: border-box; user-select: none; }
+        body { margin: 0; background-color: var(--bg-color); color: var(--text-color); font-family: var(--font-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+
+        .dashboard {
+            background: var(--panel-color); border: 3px solid #1f1f3d; border-radius: 15px;
+            padding: 20px; width: 900px; max-width: 95vw; box-shadow: 0 0 30px rgba(0, 240, 255, 0.1);
+            position: relative;
         }
-        .slider-section {
-            background: #3d3d3d;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
+
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--card-bg); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #2a2a4a;
         }
-        input[type=range] {
-            width: 80%;
-            margin-top: 10px;
+
+        .stat-box { text-align: center; }
+        .stat-box.large { font-size: 1.5rem; font-weight: bold; color: var(--neon-yellow); }
+        .stat-value { font-size: 1.8rem; font-weight: bold; margin-top: 5px; }
+        
+        .spread-container { display: flex; align-items: center; gap: 10px; flex-direction: column; }
+        .spread-bar { width: 150px; height: 10px; background: #222; border-radius: 5px; overflow: hidden; position: relative;}
+        .spread-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--neon-yellow), red); transition: width 0.3s; }
+
+        .pop-bar-container { width: 150px; height: 15px; background: #222; border-radius: 8px; overflow: hidden; margin-top: 5px;}
+        .pop-fill { height: 100%; width: 100%; background: var(--neon-green); transition: width 0.3s, background 0.3s; }
+
+        .services-panel {
+            display: flex; justify-content: space-around; background: #090911; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #1f1f3d;
         }
-        button {
-            background: #00a8ff;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            font-size: 1rem;
-            font-weight: bold;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 15px;
-            width: 100%;
+        .service-icon {
+            font-size: 3rem; text-align: center; transition: all 0.3s; filter: grayscale(0%);
         }
-        button:hover { background: #0097e6; }
+        .service-icon.broken { filter: grayscale(100%); opacity: 0.5; animation: shake 0.5s infinite; }
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-2px); } 50% { transform: translateX(2px); } 75% { transform: translateX(-2px); } 100% { transform: translateX(0); } }
+
+        .controls-panel {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;
+        }
+
+        .tax-card {
+            background: var(--card-bg); padding: 15px; border-radius: 10px; border: 1px solid #2a2a4a;
+            position: relative; text-align: center;
+        }
+
+        .tax-card h3 { margin: 0 0 15px 0; color: var(--neon-blue); display: flex; justify-content: center; align-items: center; gap: 10px;}
+
+        /* Tooltips */
+        .tooltip-container {
+            position: relative; display: inline-block; width: 24px; height: 24px; background: #0077ff; 
+            border-radius: 50%; color: white; font-weight: bold; cursor: pointer; line-height: 24px; font-size: 14px;
+        }
+        .tooltip-text {
+            visibility: hidden; width: 200px; background-color: #111; color: #fff; text-align: center;
+            border-radius: 8px; padding: 10px; position: absolute; z-index: 100; bottom: 125%; left: 50%;
+            margin-left: -100px; opacity: 0; transition: opacity 0.3s; border: 1px solid var(--neon-blue);
+            font-size: 0.85rem; font-weight: normal; line-height: 1.4; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
+
+        /* Sliders */
+        input[type=range] { width: 100%; accent-color: var(--neon-pink); cursor: pointer; }
+        .slider-labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: #888; margin-top: 5px; }
+        .tax-val { font-size: 1.2rem; font-weight: bold; color: var(--neon-yellow); margin-top: 5px; display: block;}
+
+        /* Toggle (Accise) */
+        .switch { position: relative; display: inline-block; width: 60px; height: 34px; margin-top: 10px;}
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider-tg { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; }
+        .slider-tg:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider-tg { background-color: var(--neon-pink); }
+        input:checked + .slider-tg:before { transform: translateX(26px); }
+
+        /* TARI Buttons */
+        .tari-group { display: flex; justify-content: center; gap: 5px; margin-top: 10px; }
+        .btn-tari { background: #333; border: none; color: white; padding: 8px 12px; border-radius: 5px; cursor: pointer; transition: 0.2s; font-weight: bold; }
+        .btn-tari.eco.active { background: var(--neon-green); color: black;}
+        .btn-tari.norm.active { background: var(--neon-yellow); color: black;}
+        .btn-tari.disc.active { background: red; color: white;}
+
+        .btn-advance {
+            grid-column: span 3; background: linear-gradient(90deg, #00f0ff, #0077ff); color: white;
+            border: none; padding: 20px; font-size: 1.5rem; font-weight: bold; border-radius: 10px;
+            cursor: pointer; transition: transform 0.1s, box-shadow 0.2s; text-transform: uppercase; margin-top: 10px;
+        }
+        .btn-advance:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0, 240, 255, 0.4); }
+
+        /* Overlays */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(6, 6, 12, 0.95);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; text-align: center; border-radius: 15px; padding: 30px;
+        }
+        .overlay h1 { font-size: 3rem; margin: 0 0 20px 0; }
+        .overlay p { font-size: 1.2rem; max-width: 600px; line-height: 1.5; color: #ccc;}
+        .hidden { display: none !important; }
+        
+        .btn-action { background: var(--neon-pink); border: none; padding: 15px 30px; font-size: 1.2rem; font-weight: bold; color: white; border-radius: 8px; cursor: pointer; margin-top: 20px;}
+        .btn-action.green { background: var(--neon-green); color: black;}
+
     </style>
 </head>
 <body>
 
-<div id="game-container">
-    <h2>🏛️ Il Sindaco del Bilancio</h2>
-    <p>Turno: <span id="turno-txt">1</span>/5</p>
-
-    <div class="bars">
-        <label>😊 Popolarità Cittadini: <span id="pop-val">50</span>%</label>
-        <div class="bar-container"><div id="pop-fill" class="bar-fill"></div></div>
-        
-        <label>⚠️ Debito Pubblico: <span id="debito-val">20</span>k €</label>
-        <div class="bar-container"><div id="debito-fill" class="bar-fill"></div></div>
+<div class="dashboard">
+    <div id="event-overlay" class="overlay">
+        <h1 id="event-title" style="color: var(--neon-blue);">Benvenuto, Sindaco!</h1>
+        <p id="event-desc">Hai 5 anni per guidare la città. Usa le tasse per pagare le spese e gli imprevisti, ma attento a non far arrabbiare troppo i cittadini o finire in bancarotta!</p>
+        <button class="btn-action" onclick="closeEvent()">Inizia il Mandato</button>
     </div>
 
-    <div id="city-grid">
-        <span id="building-scuola" class="city-element">🏫</span>
-        <span id="building-ospedale" class="city-element">🏥</span>
-        <span id="building-strade" class="city-element">🛣️</span>
-        <span id="building-parco" class="city-element">🌳</span>
+    <div id="endgame-overlay" class="overlay hidden">
+        <h1 id="end-title">Fine</h1>
+        <p id="end-desc"></p>
+        <button id="end-btn" class="btn-action green hidden" onclick="closeAndSave()">Chiudi e Salva in GDevelop</button>
+        <button id="retry-btn" class="btn-action hidden" onclick="location.reload()">Riprova</button>
     </div>
 
-    <div id="event-box">Istruzioni: Regola le tasse per il prossimo anno e premi "Conferma Turno" per vedere l'impatto!</div>
+    <header>
+        <div class="stat-box large">
+            ANNO<br><span id="year-display" class="stat-value" style="color: white;">1 / 5</span>
+        </div>
+        <div class="stat-box">
+            BILANCIO ANNUALE<br>
+            <span id="budget-display" class="stat-value" style="color: var(--neon-green);">+0 €</span>
+        </div>
+        <div class="spread-container">
+            <div>DEBITO: <span id="debt-display" style="font-weight:bold; color:var(--neon-pink);">0 €</span></div>
+            <div>SPREAD 🔥</div>
+            <div class="spread-bar"><div class="spread-fill" id="spread-bar"></div></div>
+        </div>
+        <div class="stat-box">
+            POPOLARITÀ <span id="pop-text">100%</span>
+            <div class="pop-bar-container"><div class="pop-fill" id="pop-bar"></div></div>
+        </div>
+    </header>
 
-    <div class="slider-section">
-        <label>💰 Livello Tasse Generali: <span id="tasse-val">10</span>%</label><br>
-        <input type="range" id="tasse-slider" min="0" max="30" value="10" oninput="aggiornaSlider(this.value)">
+    <div class="services-panel">
+        <div class="service-icon" id="icon-school">🏫<br><span style="font-size: 1rem; color:#888;">Scuola</span></div>
+        <div class="service-icon" id="icon-hospital">🏥<br><span style="font-size: 1rem; color:#888;">Ospedale</span></div>
+        <div class="service-icon" id="icon-roads">🛣️<br><span style="font-size: 1rem; color:#888;">Strade</span></div>
+        <div class="service-icon" id="icon-park">🌳<br><span style="font-size: 1rem; color:#888;">Parchi</span></div>
     </div>
 
-    <button onclick="prossimoTurno()">Conferma e Avanza Anno ➡️</button>
+    <div class="controls-panel">
+        <div class="tax-card">
+            <h3>IRPEF 
+                <div class="tooltip-container">?<span class="tooltip-text">Tassa sui redditi. Dà un gettito enorme subito, ma fa crollare istantaneamente la popolarità se tenuta alta!</span></div>
+            </h3>
+            <input type="range" id="irpef-slider" min="0" max="3" step="1" value="1" oninput="updateProjections()">
+            <div class="slider-labels"><span>0%</span><span>10%</span><span>20%</span><span>30%</span></div>
+            <span class="tax-val" id="irpef-val">10%</span>
+        </div>
+
+        <div class="tax-card">
+            <h3>IVA 
+                <div class="tooltip-container">?<span class="tooltip-text">Tassa sui consumi. Buoni incassi ma se esageri distruggi l'economia locale scontentando tutti.</span></div>
+            </h3>
+            <input type="range" id="iva-slider" min="0" max="3" step="1" value="1" oninput="updateProjections()">
+            <div class="slider-labels"><span>0%</span><span>11%</span><span>22%</span><span>33%</span></div>
+            <span class="tax-val" id="iva-val">11%</span>
+        </div>
+
+        <div class="tax-card">
+            <h3>IRES
+                <div class="tooltip-container">?<span class="tooltip-text">Tassa sulle aziende. Non intacca subito la popolarità, ma se tenuta alta toglie fondi a Scuole e Ospedali, rompendoli.</span></div>
+            </h3>
+            <input type="range" id="ires-slider" min="0" max="3" step="1" value="1" oninput="updateProjections()">
+            <div class="slider-labels"><span>0%</span><span>10%</span><span>15%</span><span>25%</span></div>
+            <span class="tax-val" id="ires-val">10%</span>
+        </div>
+
+        <div class="tax-card">
+            <h3>ACCISE
+                <div class="tooltip-container">?<span class="tooltip-text">Tassa fissa sulla benzina. Dà 5.000€ facili e sicuri, ma abbassa la popolarità ogni anno in cui è accesa.</span></div>
+            </h3>
+            <label class="switch">
+                <input type="checkbox" id="accise-switch" onchange="updateProjections()">
+                <span class="slider-tg"></span>
+            </label>
+            <span class="tax-val" id="accise-val" style="color:#aaa;">SPENTE (0 €)</span>
+        </div>
+
+        <div class="tax-card">
+            <h3>TARI (Rifiuti)
+                <div class="tooltip-container">?<span class="tooltip-text">ECO: Costa 2000€ ma i cittadini amano i parchi puliti. NORMAL: Nessun effetto. DISCARICA: Incassi 4000€ ma il parco si inquina e i cittadini si arrabbiano.</span></div>
+            </h3>
+            <div class="tari-group">
+                <button class="btn-tari eco" id="tari-eco" onclick="setTari('eco')">ECO</button>
+                <button class="btn-tari norm active" id="tari-norm" onclick="setTari('norm')">NORMAL</button>
+                <button class="btn-tari disc" id="tari-disc" onclick="setTari('disc')">DISCARICA</button>
+            </div>
+            <span class="tax-val" id="tari-val" style="color:#aaa; font-size: 1rem;">Costo: 0 €</span>
+        </div>
+
+        <button class="btn-advance" onclick="advanceYear()">Conferma e Avanza Anno ➡️</button>
+    </div>
 </div>
 
 <script>
-    let turno = 1;
-    let popolarita = 50;
-    let debito = 20;
-    let livelloTasse = 10;
+    // Variabili di Gioco
+    let currentYear = 1;
+    let popularity = 80;
+    let debt = 0;
+    let spread = 0;
+    let maxDebt = 80000;
+    
+    // Spese base per tenere accesa la città
+    let baseExpenses = 12000; 
+    let currentEventExpense = 0;
+    
+    // Mappatura scatti Sliders
+    const mapIrpef = [0, 10, 20, 30];
+    const mapIva = [0, 11, 22, 33];
+    const mapIres = [0, 10, 15, 25];
+    let currentTari = 'norm';
 
-    // Database degli eventi fissi per turno
-    const eventi = [
-        "Anno 1: Gli insegnanti chiedono fondi per ristrutturare la scuola.",
-        "Anno 2: C'è bisogno di riparare le buche sulle strade principali.",
-        "Anno 3: I medici segnalano che l'ospedale ha finito i posti letto disponibili.",
-        "Anno 4: I cittadini richiedono la manutenzione del parco pubblico comunale.",
-        "Anno 5: Ultimo anno! Bilancia i conti prima delle elezioni finali."
+    // Eventi Scriptati per Turno
+    const events = [
+        { desc: "Tutto tranquillo, ma le spese fisse della città (manutenzione scuole e strade) ammontano a 12.000€. Imposta le tasse per pareggiare il bilancio!", cost: 0 },
+        { desc: "Emergenza Ospedale! I macchinari sono guasti. Ci servono 8.000€ extra o la sanità collasserà.", cost: 8000 },
+        { desc: "Piogge torrenziali! Le strade sono piene di voragini. Costo riparazioni straordinarie: 10.000€.", cost: 10000 },
+        { desc: "Riforma della Pubblica Amministrazione. Spesa imprevista per aggiornare i server comunali: 5.000€.", cost: 5000 },
+        { desc: "Ultimo anno di mandato! Dimostra di saper tenere i conti in regola senza massacrare i cittadini di tasse.", cost: 0 }
     ];
 
-    function aggiornaSlider(valore) {
-        livelloTasse = parseInt(valore);
-        document.getElementById("tasse-val").innerText = livelloTasse;
+    function setTari(mode) {
+        currentTari = mode;
+        document.getElementById('tari-eco').classList.remove('active');
+        document.getElementById('tari-norm').classList.remove('active');
+        document.getElementById('tari-disc').classList.remove('active');
+        document.getElementById(`tari-${mode}`).classList.add('active');
+        updateProjections();
     }
 
-    function prossimoTurno() {
-        // Calcolo logica finanziaria basata sulle tasse
-        // Tasse basse (sotto il 12%) -> i cittadini sono felici ma fai debito
-        // Tasse alte (sopra il 18%) -> incassi soldi (riduci debito) ma la popolarità cala
-        if (livelloTasse < 12) {
-            popolarita += 10;
-            debito += 15; // Spesa pubblica non coperta dalle tasse
-        } else if (livelloTasse > 18) {
-            popolarita -= 15;
-            debito -= 10; // Riduci il debito con le entrate
-        } else {
-            // Tasse bilanciate
-            popolarita += 2;
-            debito += 2;
-        }
+    function updateProjections() {
+        // Lettura Inputs
+        let valIrpef = mapIrpef[document.getElementById('irpef-slider').value];
+        let valIva = mapIva[document.getElementById('iva-slider').value];
+        let valIres = mapIres[document.getElementById('ires-slider').value];
+        let isAccise = document.getElementById('accise-switch').checked;
 
-        // Applica vincoli (0-100)
-        popolarita = Math.max(0, Math.min(100, popolarita));
-        debito = Math.max(0, debito);
-
-        // AGGIORNA LA GRAFICA DELLA CITTÀ in base alle statistiche
-        // Se il debito è troppo alto, i servizi deperiscono (diventano trasparenti)
-        if (debito > 40) {
-            document.getElementById("building-strade").classList.add("rotta");
-            document.getElementById("building-parco").classList.add("rotta");
-        } else {
-            document.getElementById("building-strade").classList.remove("rotta");
-            document.getElementById("building-parco").classList.remove("rotta");
-        }
-
-        if (popolarita < 30) {
-            document.getElementById("building-scuola").classList.add("rotta");
-        } else {
-            document.getElementById("building-scuola").classList.remove("rotta");
-        }
-
-        // Aggiorna interfaccia visiva
-        document.getElementById("pop-val").innerText = popolarita;
-        document.getElementById("pop-fill").style.width = popolarita + "%";
+        // Aggiorna Testi UI
+        document.getElementById('irpef-val').innerText = valIrpef + "%";
+        document.getElementById('iva-val').innerText = valIva + "%";
+        document.getElementById('ires-val').innerText = valIres + "%";
         
-        document.getElementById("debito-val").innerText = debito;
-        // La barra del debito si riempie proporzionalmente a un tetto massimo di 80k
-        document.getElementById("debito-fill").style.width = Math.min(100, (debito / 80) * 100) + "%";
+        document.getElementById('accise-val').innerText = isAccise ? "ACCESE (+5.000 €)" : "SPENTE (0 €)";
+        document.getElementById('accise-val').style.color = isAccise ? "var(--neon-green)" : "#aaa";
 
-        // Controlli di Game Over immediati
-        if (popolarita <= 0) {
-            alert("Game Over! I cittadini ti hanno rimosso dall'incarico per via delle rivolte!");
-            resetGioco();
-            return;
-        }
-        if (debito >= 80) {
-            alert("Game Over! Il debito è fuori controllo, lo Spread è esploso e la città è fallita!");
-            resetGioco();
-            return;
-        }
+        let tariText = "0 €";
+        if (currentTari === 'eco') tariText = "Costo: -2.000 €";
+        if (currentTari === 'disc') tariText = "Ricavo: +4.000 €";
+        document.getElementById('tari-val').innerText = tariText;
 
-        // Avanzamento turni
-        turno++;
-        if (turno > 5) {
-            alert("Vittoria! Sei arrivato alla fine del mandato. Popolarità finale: " + popolarita + "% - Debito: " + debito + "k €");
-            resetGioco();
-            return;
-        }
+        // Calcolo Entrate Proiettate
+        let revenues = (valIrpef * 400) + (valIva * 300) + (valIres * 200);
+        if (isAccise) revenues += 5000;
+        if (currentTari === 'disc') revenues += 4000;
+        if (currentTari === 'eco') revenues -= 2000;
 
-        document.getElementById("turno-txt").innerText = turno;
-        document.getElementById("event-box").innerText = eventi[turno - 1];
+        // Calcolo Interessi Debito
+        let interest = Math.floor(spread * 30); // Es: Spread 100 = 3000€ interessi
+
+        // Calcolo Totale
+        let totalExpenses = baseExpenses + currentEventExpense + interest;
+        let balance = revenues - totalExpenses;
+
+        let bdgDisplay = document.getElementById('budget-display');
+        bdgDisplay.innerText = (balance >= 0 ? "+" : "") + balance + " €";
+        bdgDisplay.style.color = balance >= 0 ? "var(--neon-green)" : "var(--neon-pink)";
+        
+        return { balance, valIrpef, valIva, valIres, isAccise };
     }
 
-    function resetGioco() {
-        turno = 1;
-        popolarita = 50;
-        debito = 20;
-        livelloTasse = 10;
-        document.getElementById("tasse-slider").value = 10;
-        aggiornaSlider(10);
-        document.getElementById("turno-txt").innerText = turno;
-        document.getElementById("event-box").innerText = eventi[0];
-        document.getElementById("pop-val").innerText = popolarita;
-        document.getElementById("pop-fill").style.width = "50%";
-        document.getElementById("debito-val").innerText = debito;
-        document.getElementById("debito-fill").style.width = "25%";
-        document.querySelectorAll(".city-element").forEach(el => el.classList.remove("rotta"));
+    function advanceYear() {
+        let proj = updateProjections();
+
+        // Applica Bilancio al Debito
+        if (proj.balance < 0) {
+            debt += Math.abs(proj.balance);
+        } else {
+            debt -= proj.balance;
+            if (debt < 0) debt = 0; // Il debito non scende sotto zero
+        }
+
+        // Ricalcola Spread
+        spread = Math.floor((debt / maxDebt) * 100);
+        if (spread > 100) spread = 100;
+
+        // Calcolo Popolarità
+        // Hit istantanei dalle tasse alte
+        if (proj.valIrpef > 10) popularity -= (proj.valIrpef - 10) * 0.8;
+        if (proj.valIva > 11) popularity -= (proj.valIva - 11) * 0.5;
+        if (proj.isAccise) popularity -= 5;
+        if (currentTari === 'disc') popularity -= 10;
+        if (currentTari === 'eco') popularity += 5;
+        
+        // Bonus Popolarità se le tasse sono basse e i servizi funzionano
+        if (proj.valIrpef === 0 && proj.valIva <= 11) popularity += 5;
+        if (popularity > 100) popularity = 100;
+
+        // Rompere Servizi Graficamente
+        document.getElementById('icon-school').className = proj.valIres >= 25 ? "service-icon broken" : "service-icon";
+        document.getElementById('icon-hospital').className = proj.valIres >= 25 ? "service-icon broken" : "service-icon";
+        document.getElementById('icon-park').className = currentTari === 'disc' ? "service-icon broken" : "service-icon";
+        document.getElementById('icon-roads').className = spread > 70 ? "service-icon broken" : "service-icon";
+
+        updateUI();
+
+        // Controllo Game Over
+        if (popularity <= 0) {
+            showEndGame(false, "RIVOLTA POPOLARE", "Hai spremuto troppo i cittadini con tasse altissime! La piazza si è ribellata e sei stato rimosso dall'incarico.");
+            return;
+        }
+        if (debt >= maxDebt) {
+            showEndGame(false, "DEFAULT FINANZIARIO", "Il debito pubblico ha superato gli 80.000€. Lo Spread è esploso, i mercati internazionali ci hanno tagliato i fondi. La città è in bancarotta!");
+            return;
+        }
+
+        // Avanza o Vinci
+        currentYear++;
+        if (currentYear > 5) {
+            showEndGame(true, "MANDATO COMPLETATO!", "Vittoria eccellente! Sei riuscito a sopravvivere per 5 anni tenendo in equilibrio le finanze della città senza farti odiare dal popolo. Sei stato rieletto!");
+        } else {
+            showEvent(currentYear);
+        }
     }
 
-    // Avvio iniziale testo dell'evento
-    document.getElementById("event-box").innerText = eventi[0];
+    function updateUI() {
+        document.getElementById('year-display').innerText = currentYear + " / 5";
+        document.getElementById('debt-display').innerText = debt + " €";
+        
+        let popBar = document.getElementById('pop-bar');
+        popBar.style.width = Math.max(popularity, 0) + "%";
+        if (popularity > 50) popBar.style.background = "var(--neon-green)";
+        else if (popularity > 25) popBar.style.background = "var(--neon-yellow)";
+        else popBar.style.background = "red";
+        document.getElementById('pop-text').innerText = Math.floor(popularity) + "%";
+
+        document.getElementById('spread-bar').style.width = spread + "%";
+    }
+
+    function showEvent(year) {
+        let ev = events[year - 1];
+        currentEventExpense = ev.cost;
+        document.getElementById('event-title').innerText = "Anno " + year;
+        document.getElementById('event-desc').innerText = ev.desc;
+        document.getElementById('event-overlay').classList.remove('hidden');
+        updateProjections(); // Aggiorna i calcoli con la nuova spesa imprevista
+    }
+
+    function closeEvent() {
+        document.getElementById('event-overlay').classList.add('hidden');
+    }
+
+    function showEndGame(isWin, title, desc) {
+        document.getElementById('endgame-overlay').classList.remove('hidden');
+        document.getElementById('end-title').innerText = title;
+        document.getElementById('end-desc').innerText = desc;
+        
+        if (isWin) {
+            document.getElementById('end-title').style.color = "var(--neon-green)";
+            document.getElementById('end-btn').classList.remove('hidden');
+        } else {
+            document.getElementById('end-title').style.color = "var(--neon-pink)";
+            document.getElementById('retry-btn').classList.remove('hidden');
+        }
+    }
+
+    // COLLEGAMENTO GDEVELOP
+    function closeAndSave() {
+        if (window.parent) {
+            window.parent.postMessage({
+                type: "SINDACO_VICTORY", // Attenzione: Dovrai aggiungere questo case allo switch in GDevelop!
+                score: Math.floor(popularity * 10) // Punti basati sulla popolarità residua
+            }, "*");
+        }
+    }
+
+    // Inizializzazione
+    updateProjections();
+    updateUI();
 </script>
 
 </body>
